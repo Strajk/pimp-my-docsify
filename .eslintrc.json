@@ -1,0 +1,10 @@
+{
+  "extends": "eslint:recommended",
+  "plugins": ["markdown"],
+  "rules": {
+    "quotes": ["error", "double"],
+    "indent": ["error", 2],
+    "semi": ["error", "never"],
+    "space-in-parens": ["error", "never"]
+  }
+}

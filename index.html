@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Pimp my Docsify</title>
+
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+
+  <link rel="stylesheet" href="//unpkg.com/bootstrap/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="//unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.min.css" />
+
+  <link rel="stylesheet" href="//unpkg.com/docsify/lib/themes/vue.css" />
+
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/regular.css" integrity="sha384-FKw7x8fCxuvzBwOJmhTJJsKzBl8dnN9e2R4+pXRfYoHivikuHkzWyhKWDSMcGNK8" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/brands.css" integrity="sha384-n9+6/aSqa9lBidZMRCQHTHKJscPq6NW4pCQBiMmHdUCvPN8ZOg2zJJTkC7WIezWv" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/fontawesome.css" integrity="sha384-vd1e11sR28tEK9YANUtpIOdjGW14pS87bUBuOIoBILVWLFnS+MCX9T6MMf0VdPGq" crossorigin="anonymous">
+
+  <link rel="stylesheet" href="//unpkg.com/prismjs@1.16.0/plugins/line-highlight/prism-line-highlight.css">
+
+  <style>
+    :root {
+      --theme-color: hsl(345, 92%, 45%);
+      --theme-color-dark: hsl(345, 92%, 35%);
+
+      --text-color-base: hsl(240, 22%, 20%);
+      --text-color-secondary: hsl(240, 7%, 40%);
+      --text-color-tertiary: hsl(240, 5%, 50%);
+    }
+
+    .markdown-section {
+      max-width: 1000px !important;
+    }
+
+    .markdown-section pre {
+      padding-left: .3rem !important;
+      padding-right: .3rem !important;;
+    }
+
+    .markdown-section pre > code {
+      padding-top: .5em !important;
+      padding-bottom: .5em !important;
+    }
+
+    .line-highlight {
+      margin-top: .5em !important;
+    }
+
+    pre[data-line] {
+      padding-top: 0 !important;
+      padding-bottom: 0 !important;
+    }
+
+    .line-highlight:before {
+      display: none !important;
+    }
+
+    .docsify-copy-code-button {
+      font-size: 11px !important;
+    }
+  </style>
+
+</head>
+<body>
+  <!-- Vue -->
+  <script src="//unpkg.com/vue@latest/dist/vue.js"></script><!-- Use `.min` for production -->
+
+  <!-- Polyfills -->
+  <script src="//unpkg.com/@babel/polyfill@latest/dist/polyfill.js"></script><!-- Use `.min` for production -->
+
+
+  <!-- Docsify -->
+  <script src="//unpkg.com/docsify@latest/lib/docsify.js"></script><!-- Use `.min` for production -->
+
+  <!-- Plugins -->
+  <script src="//unpkg.com/docsify-copy-code@latest"></script>
+  <script src="//unpkg.com/prismjs/components/prism-bash.js"></script><!-- Use `.min` for production -->
+  <script src="//unpkg.com/prismjs@1.16.0/plugins/line-highlight/prism-line-highlight.js"></script>
+
+  <script src="//unpkg.com/vue-disqus@latest/dist/vue-disqus.js"></script>
+  <script src="//unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.js"></script><!-- Use `.min` for production -->
+  <script src="//unpkg.com/js-yaml@3/dist/js-yaml.js"></script>
+  <script src="//unpkg.com/yaml-front-matter@4/dist/yamlFront.js"></script>
+
+
+  <!-- App placeholder -->
+  <div id="app"></div>
+
+  <!-- Initialize -->
+  <script>
+    function simpleQueryString(input) {
+      const params = (input.split('?')[1] || '').split('&');
+      return params.reduce((acc, x) => {
+        const split = x.split('=')
+        acc[split[0]] = split[1] || true;
+        return acc
+      }, {})
+    }
+
+    Vue.use(VueDisqus)
+    window.$docsify = {
+      name: 'Pimp my Docsify',
+      repo: 'https://github.com/Strajk/pimp-my-docsify',
+      loadSidebar: true,
+      subMaxLevel: 2,
+      // Credits to https://github.com/up9cloud
+      markdown: (marked, renderer) => {
+        const lexer = marked.lexer
+        marked.lexer = (text, options) => {
+          const parsed = window.yamlFront.loadFront(text)
+          const contentKey = '__content'
+          const table = [[], [], []]
+          for (let key in parsed) {
+            if (key === contentKey) continue
+            table[0].push(key)
+            table[1].push('---')
+            table[2].push(parsed[key])
+          }
+          let tableMd = table.map(row => row.join('|')).join('\n')
+          return tableMd.trim() // TODO: Nicer
+            ? lexer(parsed[contentKey] + '\n---\n' + tableMd, options)
+            : lexer(parsed[contentKey])
+        }
+
+        marked.setOptions({
+          renderer: Object.assign(renderer, {
+            code: function (code, spec) {
+              const _lang = spec.split("?")[0]
+              // TODO: Make it work also for other params
+              const _params = simpleQueryString(spec)
+              const hl = window.Prism.highlight(code, Prism.languages[_lang] || Prism.languages.markup);
+              return (`<pre v-pre data-lang="${_lang}" data-line="${_params.line}"><code class="lang-${_lang}">${hl}</code></pre>`)
+            }
+          }),
+          smartypants: true
+        })
+        return marked
+      },
+      plugins: [
+        (hook, vm) => {
+          hook.doneEach((html) => {
+            // line-highlight plugin requires to be called with
+            // Prism.(highlightAll/highlightElement)
+            // just Prism.highlight is not enough as it doesn't emmit 'complete' hook
+            Prism.highlightAll();
+          })
+        }
+      ]
+    }
+
+
+    setTimeout(() => {
+      const selector = "#main"
+      document.querySelector(selector).insertAdjacentHTML(
+        "beforeend",
+        '<vue-disqus shortname="pimp-my-docsify"></vue-disqus>'
+      )
+      new Vue({
+        el: selector, // Created by Docsify
+      })
+    }, 2500)
+
+  </script>
+</body>
+</html>
