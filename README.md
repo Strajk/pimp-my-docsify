@@ -50,10 +50,13 @@ $("body").click(() => {
 });
 ```
 
+## Typography
+
+:100: emoji support with `:emoji:`
+
 ## Diagram
 
 // TODO!
-
 
 ## Credits
 
