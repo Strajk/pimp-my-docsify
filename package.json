@@ -18,7 +18,7 @@
   "homepage": "https://github.com/Strajk/qa-academy#readme",
   "dependencies": {},
   "devDependencies": {
-    "eslint": "6.5.1",
+    "eslint": "6.6.0",
     "eslint-plugin-markdown": "1.0.0",
     "markdownlint": "0.16.0",
     "markdownlint-cli": "0.14.1"
